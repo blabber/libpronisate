@@ -37,5 +37,7 @@ main(int argc, char **argv)
 		}
 	}
 
+	free(stream);
+
 	return (0);
 }
