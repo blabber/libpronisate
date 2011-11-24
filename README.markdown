@@ -9,7 +9,7 @@ To build the libraries: `cd src && make`
 
 To build the example: `cd example && make`
 
-To run the example: `cd example && env LD_PRELOAD_PATH=../src ./example`
+To run the example: `cd example && env LD_LIBRARY_PATH=../src ./example`
 
 *This code is work in progress and will continue to evolve.*
 
