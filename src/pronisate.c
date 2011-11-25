@@ -12,7 +12,6 @@ struct pron_context {
 	unsigned char	*stream;
 };
 
-
 /* stolen from the MagickWand documentation */
 #define ThrowWandException(wand) do {                             \
 	char *description;                                        \
@@ -60,21 +59,21 @@ pron_context_close(struct pron_context *ctx)
 unsigned char *
 pron_get_stream(struct pron_context *ctx)
 {
-	assert(ctx);
+	assert(ctx != NULL);
 	return (ctx->stream);
 }
 
 size_t
 pron_get_width(struct pron_context *ctx)
 {
-	assert(ctx);
+	assert(ctx != NULL);
 	return (ctx->width);
 }
 
 size_t
 pron_get_height(struct pron_context *ctx)
 {
-	assert(ctx);
+	assert(ctx != NULL);
 	return (ctx->height);
 }
 
