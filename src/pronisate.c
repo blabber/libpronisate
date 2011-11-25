@@ -78,7 +78,7 @@ pron_get_height(struct pron_context *ctx)
 }
 
 size_t
-pron_pronisate(struct pron_context *ctx, char *filename)
+pron_pronisate(struct pron_context *ctx, char *filename, ssize_t frame)
 {
 	PixelIterator *iterator;
 	PixelWand *background;
@@ -90,6 +90,9 @@ pron_pronisate(struct pron_context *ctx, char *filename)
 	/* read image. */
 	foreground_image = NewMagickWand();
 	status = MagickReadImage(foreground_image, filename);
+	if (status == MagickFalse)
+		ThrowWandException(foreground_image);
+	status = MagickSetIteratorIndex(foreground_image, frame);
 	if (status == MagickFalse)
 		ThrowWandException(foreground_image);
 

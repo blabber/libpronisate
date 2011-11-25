@@ -13,4 +13,7 @@ To run the example: `cd example && env LD_LIBRARY_PATH=../src ./example`
 
 *This code is work in progress and will continue to evolve.*
 
+The example gif has been taken from [this][2] site.
+
 [1]: http://raumzeitlabor.de/wiki/PRON-Protokoll "RZL1337 - PRON-Wall Protocol"
+[2]: http://www.archive.org/details/blackandwhiteanimatedgifs "black and white animated gifs"
