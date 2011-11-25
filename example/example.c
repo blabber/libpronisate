@@ -3,8 +3,6 @@
 
 #include <pronisate.h>
 
-struct pron_context;
-
 #define IMAGE	"happy-smiley.gif"
 #define WIDTH	70
 #define HEIGHT	32
