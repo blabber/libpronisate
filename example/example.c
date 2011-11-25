@@ -35,12 +35,14 @@ main(int argc, char **argv)
 				if (x == 0)
 					printf("\n");
 
-				if (*p < 64)
+				if (*p < 51)
 					printf(" ");
-				else if (*p < 128)
+				else if (*p < 102)
 					printf(".");
-				else if (*p < 192)
+				else if (*p < 153)
 					printf(":");
+				else if (*p < 204)
+					printf("0");
 				else
 					printf("8");
 
