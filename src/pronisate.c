@@ -132,7 +132,7 @@ pron_pronisate(struct pron_context *ctx, char *filename)
 			*(p++) = (char)(lightness*255);
 		}
 	}
-	if (y < MagickGetImageHeight(image_wand))
+	if (y < ctx->height)
 		ThrowWandException(image_wand);
 
 	/* clean up */
