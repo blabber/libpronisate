@@ -3,7 +3,7 @@
 
 #include <pronisate.h>
 
-#define IMAGE	"happy-smiley.gif"
+#define IMAGE	"Rzl_logo.png"
 #define WIDTH	70
 #define HEIGHT	32
 
