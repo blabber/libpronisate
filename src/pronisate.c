@@ -81,19 +81,33 @@ size_t
 pron_pronisate(struct pron_context *ctx, char *filename)
 {
 	PixelIterator *iterator;
-	MagickWand *image_wand;
+	PixelWand *background;
+	MagickWand *image_wand, *foreground_image;
 	MagickBooleanType status;
 	unsigned char *p;
 	size_t y;
 
 	/* read image. */
-	image_wand = NewMagickWand();
-	status = MagickReadImage(image_wand, filename);
+	foreground_image = NewMagickWand();
+	status = MagickReadImage(foreground_image, filename);
 	if (status == MagickFalse)
-		ThrowWandException(image_wand);
+		ThrowWandException(foreground_image);
 
 	/* scale image */
-	status = MagickScaleImage(image_wand, ctx->width, ctx->height);
+	status = MagickScaleImage(foreground_image, ctx->width, ctx->height);
+	if (status == MagickFalse)
+		ThrowWandException(foreground_image);
+
+	/* handle transparency */
+	background = NewPixelWand();
+	PixelSetColor(background, "white");
+
+	image_wand = NewMagickWand();
+	status = MagickNewImage(image_wand, ctx->width, ctx->height, background);
+	if (status == MagickFalse)
+		ThrowWandException(foreground_image);
+
+	status = MagickCompositeImage(image_wand, foreground_image, OverCompositeOp, 0, 0);
 	if (status == MagickFalse)
 		ThrowWandException(image_wand);
 
@@ -123,6 +137,8 @@ pron_pronisate(struct pron_context *ctx, char *filename)
 
 	/* clean up */
 	DestroyPixelIterator(iterator);
+	DestroyPixelWand(background);
+	DestroyMagickWand(foreground_image);
 	DestroyMagickWand(image_wand);
 
 	return (0);
