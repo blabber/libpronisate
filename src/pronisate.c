@@ -77,7 +77,7 @@ pron_get_height(struct pron_context *ctx)
 	return (ctx->height);
 }
 
-size_t
+int
 pron_pronisate(struct pron_context *ctx, char *filename, ssize_t frame)
 {
 	PixelIterator *iterator;
