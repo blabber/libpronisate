@@ -10,6 +10,7 @@ struct pron_context {
 	size_t		 width;
 	size_t		 height;
 	unsigned char	*stream;
+	MagickWand	*wand;
 };
 
 /* stolen from the MagickWand documentation */
@@ -20,13 +21,13 @@ struct pron_context {
 	fprintf(stderr, "%s %s %lu %s\n",                         \
 		GetMagickModule(), description);                  \
 	description=(char *) MagickRelinquishMemory(description); \
-	return (-1);                                              \
 } while (0)
 
 struct pron_context *
-pron_context_open(size_t width, size_t height)
+pron_context_open(char *filename, size_t width, size_t height)
 {
 	struct pron_context *ctx;
+	MagickBooleanType status;
 
 	ctx = malloc(sizeof(struct pron_context));
 	if (ctx == NULL) {
@@ -44,12 +45,22 @@ pron_context_open(size_t width, size_t height)
 
 	MagickWandGenesis();
 
+	ctx->wand = NewMagickWand();
+	status = MagickReadImage(ctx->wand, filename);
+	if (status == MagickFalse) {
+		ThrowWandException(ctx->wand);
+		free(ctx->stream);
+		free(ctx);
+		return (NULL);
+	}
+
 	return (ctx);
 }
 
 void
 pron_context_close(struct pron_context *ctx)
 {
+	DestroyMagickWand(ctx->wand);
 	free(ctx->stream);
 	free(ctx);
 
@@ -78,48 +89,52 @@ pron_get_height(struct pron_context *ctx)
 }
 
 int
-pron_pronisate(struct pron_context *ctx, char *filename, ssize_t frame)
+pron_pronisate(struct pron_context *ctx, ssize_t frame)
 {
 	PixelIterator *iterator;
 	PixelWand *background;
-	MagickWand *image_wand, *foreground_image;
+	MagickWand *composite_wand;
 	MagickBooleanType status;
 	unsigned char *p;
 	size_t y;
 
-	/* read image. */
-	foreground_image = NewMagickWand();
-	status = MagickReadImage(foreground_image, filename);
-	if (status == MagickFalse)
-		ThrowWandException(foreground_image);
-	status = MagickSetIteratorIndex(foreground_image, frame);
-	if (status == MagickFalse)
-		ThrowWandException(foreground_image);
+	/* get frame */
+	status = MagickSetIteratorIndex(ctx->wand, frame);
+	if (status == MagickFalse) {
+		ThrowWandException(ctx->wand);
+		return (-1);
+	}
 
 	/* scale image */
-	status = MagickScaleImage(foreground_image, ctx->width, ctx->height);
-	if (status == MagickFalse)
-		ThrowWandException(foreground_image);
+	status = MagickScaleImage(ctx->wand, ctx->width, ctx->height);
+	if (status == MagickFalse) {
+		ThrowWandException(ctx->wand);
+		return (-1);
+	}
 
 	/* handle transparency */
 	background = NewPixelWand();
 	PixelSetColor(background, "white");
 
-	image_wand = NewMagickWand();
-	status = MagickNewImage(image_wand, ctx->width, ctx->height, background);
-	if (status == MagickFalse)
-		ThrowWandException(foreground_image);
+	composite_wand = NewMagickWand();
+	status = MagickNewImage(composite_wand, ctx->width, ctx->height, background);
+	if (status == MagickFalse) {
+		ThrowWandException(composite_wand);
+		return (-1);
+	}
 
-	status = MagickCompositeImage(image_wand, foreground_image, OverCompositeOp, 0, 0);
-	if (status == MagickFalse)
-		ThrowWandException(image_wand);
+	status = MagickCompositeImage(composite_wand, ctx->wand, OverCompositeOp, 0, 0);
+	if (status == MagickFalse) {
+		ThrowWandException(composite_wand);
+		return (-1);
+	}
 
 	/* iterate image and fill stream */
 	p = ctx->stream;
 
-	iterator = NewPixelIterator(image_wand);
+	iterator = NewPixelIterator(composite_wand);
 	if ((iterator == NULL))
-		ThrowWandException(image_wand);
+		ThrowWandException(composite_wand);
 
 	for (y = 0; y < ctx->height; y++) {
 		PixelWand **pixels;
@@ -136,13 +151,12 @@ pron_pronisate(struct pron_context *ctx, char *filename, ssize_t frame)
 		}
 	}
 	if (y < ctx->height)
-		ThrowWandException(image_wand);
+		ThrowWandException(composite_wand);
 
 	/* clean up */
 	DestroyPixelIterator(iterator);
 	DestroyPixelWand(background);
-	DestroyMagickWand(foreground_image);
-	DestroyMagickWand(image_wand);
+	DestroyMagickWand(composite_wand);
 
 	return (0);
 }

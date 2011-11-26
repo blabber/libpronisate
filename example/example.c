@@ -17,14 +17,14 @@ main(int argc, char **argv)
 	size_t x, y;
 	ssize_t frame;
 
-	ctx = pron_context_open(WIDTH, HEIGHT);
+	ctx = pron_context_open(IMAGE, WIDTH, HEIGHT);
 	if (ctx == NULL) {
 		fprintf(stderr, "pron_context_open failed\n");
 		exit(EXIT_FAILURE);
 	}
 
 	for (frame = 0; frame <= FRAMES; frame++){
-		if (pron_pronisate(ctx, IMAGE, frame) != 0) {
+		if (pron_pronisate(ctx, frame) != 0) {
 			fprintf(stderr, "pron_pronisate failed\n");
 			exit(EXIT_FAILURE);
 		}
@@ -50,7 +50,7 @@ main(int argc, char **argv)
 			}
 		}
 
-		usleep(1);
+		usleep(125000);
 	}
 
 	pron_context_close(ctx);
