@@ -9,6 +9,7 @@
 struct pron_context {
 	size_t		 width;
 	size_t		 height;
+	ssize_t		 frame_count;
 	unsigned char	*stream;
 	MagickWand	*wand;
 };
@@ -54,6 +55,10 @@ pron_context_open(char *filename, size_t width, size_t height)
 		return (NULL);
 	}
 
+	MagickSetLastIterator(ctx->wand);
+	ctx->frame_count = MagickGetIteratorIndex(ctx->wand);
+	MagickSetFirstIterator(ctx->wand);
+
 	return (ctx);
 }
 
@@ -86,6 +91,13 @@ pron_get_height(struct pron_context *ctx)
 {
 	assert(ctx != NULL);
 	return (ctx->height);
+}
+
+ssize_t
+pron_get_frame_count(struct pron_context *ctx)
+{
+	assert(ctx != NULL);
+	return (ctx->frame_count);
 }
 
 int

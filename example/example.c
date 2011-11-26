@@ -7,7 +7,6 @@
 #define IMAGE	"OWNAGE.gif"
 #define WIDTH	100
 #define HEIGHT	50
-#define FRAMES	298
 
 int
 main(int argc, char **argv)
@@ -23,7 +22,7 @@ main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	for (frame = 0; frame <= FRAMES; frame++){
+	for (frame = 0; frame <= pron_get_frame_count(ctx); frame++){
 		if (pron_pronisate(ctx, frame) != 0) {
 			fprintf(stderr, "pron_pronisate failed\n");
 			exit(EXIT_FAILURE);
