@@ -16,6 +16,8 @@ main(int argc, char **argv)
 	size_t x, y;
 	ssize_t frame;
 
+	pron_init();
+
 	ctx = pron_context_open(IMAGE, WIDTH, HEIGHT);
 	if (ctx == NULL) {
 		fprintf(stderr, "pron_context_open failed\n");
@@ -53,6 +55,8 @@ main(int argc, char **argv)
 	}
 
 	pron_context_close(ctx);
+
+	pron_deinit();
 
 	return (0);
 }

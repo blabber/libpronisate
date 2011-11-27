@@ -24,6 +24,18 @@ struct pron_context {
 	description=(char *) MagickRelinquishMemory(description); \
 } while (0)
 
+void
+pron_init()
+{
+	MagickWandGenesis();
+}
+
+void
+pron_deinit()
+{
+	MagickWandTerminus();
+}
+
 struct pron_context *
 pron_context_open(char *filename, size_t width, size_t height)
 {
@@ -43,8 +55,6 @@ pron_context_open(char *filename, size_t width, size_t height)
 	}
 	ctx->width = width;
 	ctx->height = height;
-
-	MagickWandGenesis();
 
 	ctx->wand = NewMagickWand();
 	status = MagickReadImage(ctx->wand, filename);
@@ -68,8 +78,6 @@ pron_context_close(struct pron_context *ctx)
 	DestroyMagickWand(ctx->wand);
 	free(ctx->stream);
 	free(ctx);
-
-	MagickWandTerminus();
 }
 
 unsigned char *
