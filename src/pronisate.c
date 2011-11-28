@@ -7,11 +7,11 @@
 #include "pronisate.h"
 
 struct pron_context {
-	size_t		 width;
-	size_t		 height;
-	ssize_t		 frame_count;
-	unsigned char	*stream;
-	MagickWand	*wand;
+	size_t		  width;
+	size_t		  height;
+	ssize_t		  frame_count;
+	unsigned char	 *stream;
+	MagickWand	 *wand;
 	MagickWand	**clone;
 };
 
@@ -42,8 +42,8 @@ pron_deinit()
 struct pron_context *
 pron_context_open(char *filename, size_t width, size_t height)
 {
-	struct pron_context *ctx;
-	MagickBooleanType status;
+	struct pron_context	*ctx;
+	MagickBooleanType	 status;
 
 	ctx = malloc(sizeof(struct pron_context));
 	if (ctx == NULL) {
@@ -124,11 +124,11 @@ pron_get_frame_count(struct pron_context *ctx)
 int
 pron_pronisate(struct pron_context *ctx, ssize_t frame)
 {
-	PixelIterator *iterator;
-	unsigned char *p;
-	MagickBooleanType mstatus;
-	int istatus;
-	size_t y;
+	PixelIterator		*iterator;
+	unsigned char		*p;
+	MagickBooleanType	 mstatus;
+	int			 istatus;
+	size_t			 y;
 
 	*ctx->clone = CloneMagickWand(ctx->wand);
 
@@ -161,8 +161,8 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame)
 		ThrowWandException(*ctx->clone);
 
 	for (y = 0; y < ctx->height; y++) {
-		PixelWand **pixels;
-		size_t x, width;
+		PixelWand	**pixels;
+		size_t		  x, width;
 
 		pixels = PixelGetNextIteratorRow(iterator, &width);
 		if ((pixels == NULL))
@@ -187,10 +187,10 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame)
 static int
 handle_transparency(MagickWand **image_wand)
 {
-	PixelWand *background;
-	MagickWand *composite_wand;
-	MagickBooleanType status;
-	size_t width, height;
+	PixelWand		*background;
+	MagickWand		*composite_wand;
+	MagickBooleanType	 status;
+	size_t			 width, height;
 
 	width = MagickGetImageWidth(*image_wand);
 	height = MagickGetImageHeight(*image_wand);
