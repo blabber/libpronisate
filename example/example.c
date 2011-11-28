@@ -12,8 +12,6 @@ int
 main(int argc, char **argv)
 {
 	struct pron_context *ctx;
-	unsigned char *p;
-	size_t x, y;
 	ssize_t frame;
 
 	pron_init();
@@ -25,6 +23,9 @@ main(int argc, char **argv)
 	}
 
 	for (frame = 0; frame <= pron_get_frame_count(ctx); frame++){
+		unsigned char	*p;
+		size_t		 y;
+
 		if (pron_pronisate(ctx, frame) != 0) {
 			fprintf(stderr, "pron_pronisate failed\n");
 			exit(EXIT_FAILURE);
@@ -32,6 +33,8 @@ main(int argc, char **argv)
 
 		p = pron_get_stream(ctx);
 		for (y = 0; y < pron_get_height(ctx); y++) {
+			size_t x;
+
 			for (x = 0; x < pron_get_width(ctx); x++) {
 				if (x == 0)
 					printf("\n");
