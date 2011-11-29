@@ -15,6 +15,7 @@ struct pron_context {
 };
 
 static int handle_transparency(MagickWand **_image_wand);
+static int fill_stream(struct pron_context *_ctx, MagickWand *_image_wand);
 
 /* stolen from the MagickWand documentation */
 #define ThrowWandException(wand) do {                             \
@@ -115,11 +116,8 @@ int
 pron_pronisate(struct pron_context *ctx, ssize_t frame)
 {
 	MagickWand		*image_wand;
-	PixelIterator		*iterator;
-	unsigned char		*p;
 	MagickBooleanType	 mstatus;
 	int			 istatus;
-	size_t			 y;
 
 	image_wand = CloneMagickWand(ctx->wand);
 
@@ -145,11 +143,32 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame)
 	}
 
 	/* iterate image and fill stream */
+	istatus = fill_stream(ctx, image_wand);
+	if (istatus != 0) {
+		fprintf(stderr, "fill_stream");
+		return (-1);
+	}
+
+	/* clean up */
+	DestroyMagickWand(image_wand);
+
+	return (0);
+}
+
+static int
+fill_stream(struct pron_context *ctx, MagickWand *image_wand)
+{
+	unsigned char		*p;
+	PixelIterator		*iterator;
+	size_t			 y;
+
 	p = ctx->stream;
 
 	iterator = NewPixelIterator(image_wand);
-	if ((iterator == NULL))
+	if ((iterator == NULL)) {
 		ThrowWandException(image_wand);
+		return (-1);
+	}
 
 	for (y = 0; y < ctx->height; y++) {
 		PixelWand	**pixels;
@@ -165,12 +184,12 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame)
 			*(p++) = (char)(lightness*255);
 		}
 	}
-	if (y < ctx->height)
+	if (y < ctx->height) {
 		ThrowWandException(image_wand);
+		return (-1);
+	}
 
-	/* clean up */
 	DestroyPixelIterator(iterator);
-	DestroyMagickWand(image_wand);
 
 	return (0);
 }
