@@ -7,12 +7,11 @@
 #include "pronisate.h"
 
 struct pron_context {
-	size_t		  width;
-	size_t		  height;
-	ssize_t		  frame_count;
-	unsigned char	 *stream;
-	MagickWand	 *wand;
-	MagickWand	**clone;
+	size_t		 width;
+	size_t		 height;
+	ssize_t		 frame_count;
+	unsigned char	*stream;
+	MagickWand	*wand;
 };
 
 static int handle_transparency(MagickWand **_image_wand);
@@ -56,19 +55,11 @@ pron_context_open(char *filename, size_t width, size_t height)
 		free(ctx);
 		return (NULL);
 	}
-	ctx->clone = malloc(sizeof(MagickWand *));
-	if (ctx->clone == NULL) {
-		fprintf(stderr, "malloc");
-		free(ctx->stream);
-		free(ctx);
-		return (NULL);
-	}
 
 	ctx->wand = NewMagickWand();
 	status = MagickReadImage(ctx->wand, filename);
 	if (status == MagickFalse) {
 		ThrowWandException(ctx->wand);
-		free(ctx->clone);
 		free(ctx->stream);
 		free(ctx);
 		return (NULL);
@@ -88,7 +79,6 @@ void
 pron_context_close(struct pron_context *ctx)
 {
 	DestroyMagickWand(ctx->wand);
-	free(ctx->clone);
 	free(ctx->stream);
 	free(ctx);
 }
@@ -124,30 +114,31 @@ pron_get_frame_count(struct pron_context *ctx)
 int
 pron_pronisate(struct pron_context *ctx, ssize_t frame)
 {
+	MagickWand		*image_wand;
 	PixelIterator		*iterator;
 	unsigned char		*p;
 	MagickBooleanType	 mstatus;
 	int			 istatus;
 	size_t			 y;
 
-	*ctx->clone = CloneMagickWand(ctx->wand);
+	image_wand = CloneMagickWand(ctx->wand);
 
 	/* get frame */
-	mstatus = MagickSetIteratorIndex(*ctx->clone, frame);
+	mstatus = MagickSetIteratorIndex(image_wand, frame);
 	if (mstatus == MagickFalse) {
-		ThrowWandException(*ctx->clone);
+		ThrowWandException(image_wand);
 		return (-1);
 	}
 
 	/* scale image */
-	mstatus = MagickScaleImage(*ctx->clone, ctx->width, ctx->height);
+	mstatus = MagickScaleImage(image_wand, ctx->width, ctx->height);
 	if (mstatus == MagickFalse) {
-		ThrowWandException(*ctx->clone);
+		ThrowWandException(image_wand);
 		return (-1);
 	}
 
 	/* handle transparency */
-	istatus = handle_transparency(ctx->clone);
+	istatus = handle_transparency(&image_wand);
 	if (istatus != 0) {
 		fprintf(stderr, "handle_transparency");
 		return (-1);
@@ -156,9 +147,9 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame)
 	/* iterate image and fill stream */
 	p = ctx->stream;
 
-	iterator = NewPixelIterator(*ctx->clone);
+	iterator = NewPixelIterator(image_wand);
 	if ((iterator == NULL))
-		ThrowWandException(*ctx->clone);
+		ThrowWandException(image_wand);
 
 	for (y = 0; y < ctx->height; y++) {
 		PixelWand	**pixels;
@@ -175,11 +166,11 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame)
 		}
 	}
 	if (y < ctx->height)
-		ThrowWandException(*ctx->clone);
+		ThrowWandException(image_wand);
 
 	/* clean up */
 	DestroyPixelIterator(iterator);
-	DestroyMagickWand(*ctx->clone);
+	DestroyMagickWand(image_wand);
 
 	return (0);
 }
