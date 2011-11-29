@@ -79,6 +79,9 @@ pron_context_open(char *filename, size_t width, size_t height)
 void
 pron_context_close(struct pron_context *ctx)
 {
+	assert(ctx != NULL);
+	assert(IsMagickWand(ctx->wand) == MagickTrue);
+
 	DestroyMagickWand(ctx->wand);
 	free(ctx->stream);
 	free(ctx);
@@ -118,6 +121,8 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame)
 	MagickWand		*image_wand;
 	MagickBooleanType	 mstatus;
 	int			 istatus;
+
+	assert(ctx != NULL);
 
 	image_wand = CloneMagickWand(ctx->wand);
 
@@ -162,6 +167,11 @@ fill_stream(struct pron_context *ctx, MagickWand *image_wand)
 	PixelIterator		*iterator;
 	size_t			 y;
 
+	assert(ctx != NULL);
+	assert(IsMagickWand(image_wand) == MagickTrue);
+	assert(MagickGetImageWidth(image_wand) == ctx->width);
+	assert(MagickGetImageHeight(image_wand) == ctx->height);
+
 	p = ctx->stream;
 
 	iterator = NewPixelIterator(image_wand);
@@ -201,6 +211,8 @@ handle_transparency(MagickWand **image_wand)
 	MagickWand		*composite_wand;
 	MagickBooleanType	 status;
 	size_t			 width, height;
+
+	assert(IsMagickWand(*image_wand) == MagickTrue);
 
 	width = MagickGetImageWidth(*image_wand);
 	height = MagickGetImageHeight(*image_wand);
