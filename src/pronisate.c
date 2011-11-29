@@ -56,7 +56,7 @@ pron_context_open(char *filename, size_t width, size_t height)
 		free(ctx);
 		return (NULL);
 	}
-	ctx->clone = malloc(sizeof(MagickWand **));
+	ctx->clone = malloc(sizeof(MagickWand *));
 	if (ctx->clone == NULL) {
 		fprintf(stderr, "malloc");
 		free(ctx->stream);
