@@ -126,35 +126,30 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame)
 
 	image_wand = CloneMagickWand(ctx->wand);
 
-	/* get frame */
 	mstatus = MagickSetIteratorIndex(image_wand, frame);
 	if (mstatus == MagickFalse) {
 		ThrowWandException(image_wand);
 		return (-1);
 	}
 
-	/* scale image */
 	mstatus = MagickScaleImage(image_wand, ctx->width, ctx->height);
 	if (mstatus == MagickFalse) {
 		ThrowWandException(image_wand);
 		return (-1);
 	}
 
-	/* handle transparency */
 	istatus = handle_transparency(&image_wand);
 	if (istatus != 0) {
 		fprintf(stderr, "handle_transparency");
 		return (-1);
 	}
 
-	/* iterate image and fill stream */
 	istatus = fill_stream(ctx, image_wand);
 	if (istatus != 0) {
 		fprintf(stderr, "fill_stream");
 		return (-1);
 	}
 
-	/* clean up */
 	DestroyMagickWand(image_wand);
 
 	return (0);
