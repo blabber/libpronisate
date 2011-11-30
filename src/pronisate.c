@@ -42,28 +42,28 @@ pron_deinit()
 struct pron_context *
 pron_context_open(char *filename, size_t width, size_t height)
 {
-	struct pron_context	*ctx;
+	struct pron_context	*ctx = NULL;
 	MagickBooleanType	 status;
 
 	ctx = malloc(sizeof(struct pron_context));
 	if (ctx == NULL) {
-		fprintf(stderr, "malloc");
-		return (NULL);
+		fprintf(stderr, "malloc\n");
+		goto error;
 	}
+	ctx->stream = NULL;
+	ctx->wand = NULL;
+
 	ctx->stream = malloc(width*height);
 	if (ctx->stream == NULL) {
-		fprintf(stderr, "malloc");
-		free(ctx);
-		return (NULL);
+		fprintf(stderr, "malloc\n");
+		goto error;
 	}
 
 	ctx->wand = NewMagickWand();
 	status = MagickReadImage(ctx->wand, filename);
 	if (status == MagickFalse) {
-		ThrowWandException(ctx->wand);
-		free(ctx->stream);
-		free(ctx);
-		return (NULL);
+		fprintf(stderr, "could not read image: %s\n", filename);
+		goto error;
 	}
 
 	ctx->width = width;
@@ -74,6 +74,14 @@ pron_context_open(char *filename, size_t width, size_t height)
 	MagickSetFirstIterator(ctx->wand);
 
 	return (ctx);
+
+error:
+	if (ctx->wand != NULL)
+		DestroyMagickWand(ctx->wand);
+	free(ctx->stream);
+	free(ctx);
+
+	return (NULL);
 }
 
 void
