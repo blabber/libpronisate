@@ -131,6 +131,7 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame)
 	int			 istatus;
 
 	assert(ctx != NULL);
+	assert(IsMagickWand(ctx->wand) == MagickTrue);
 
 	image_wand = CloneMagickWand(ctx->wand);
 
@@ -171,6 +172,7 @@ fill_stream(struct pron_context *ctx, MagickWand *image_wand)
 	size_t			 y;
 
 	assert(ctx != NULL);
+	assert(ctx->stream != NULL);
 	assert(IsMagickWand(image_wand) == MagickTrue);
 	assert(MagickGetImageWidth(image_wand) == ctx->width);
 	assert(MagickGetImageHeight(image_wand) == ctx->height);
