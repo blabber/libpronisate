@@ -76,10 +76,12 @@ pron_context_open(char *filename, size_t width, size_t height)
 	return (ctx);
 
 error:
-	if (ctx->wand != NULL)
-		DestroyMagickWand(ctx->wand);
-	free(ctx->stream);
-	free(ctx);
+	if (ctx != NULL) {
+		if (ctx->wand != NULL)
+			DestroyMagickWand(ctx->wand);
+		free(ctx->stream);
+		free(ctx);
+	}
 
 	return (NULL);
 }
