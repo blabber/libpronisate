@@ -128,7 +128,7 @@ pron_get_frame_count(struct pron_context *ctx)
 int
 pron_pronisate(struct pron_context *ctx, ssize_t frame)
 {
-	MagickWand		*image_wand;
+	MagickWand		*image_wand = NULL;
 	MagickBooleanType	 mstatus;
 	int			 istatus;
 
@@ -140,37 +140,44 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame)
 	mstatus = MagickSetIteratorIndex(image_wand, frame);
 	if (mstatus == MagickFalse) {
 		ThrowWandException(image_wand);
-		return (-1);
+		goto error;
 	}
 
 	mstatus = MagickScaleImage(image_wand, ctx->width, ctx->height);
 	if (mstatus == MagickFalse) {
 		ThrowWandException(image_wand);
-		return (-1);
+		goto error;
 	}
 
 	istatus = handle_transparency(&image_wand);
 	if (istatus != 0) {
 		fprintf(stderr, "handle_transparency");
-		return (-1);
+		goto error;
 	}
 
 	istatus = fill_stream(ctx, image_wand);
 	if (istatus != 0) {
 		fprintf(stderr, "fill_stream");
-		return (-1);
+		goto error;
 	}
 
 	DestroyMagickWand(image_wand);
 
 	return (0);
+
+error:
+	if (image_wand != NULL)
+		DestroyMagickWand(image_wand);
+
+	return (-1);
+
 }
 
 static int
 fill_stream(struct pron_context *ctx, MagickWand *image_wand)
 {
-	unsigned char		*p;
-	PixelIterator		*iterator;
+	unsigned char		*p = NULL;
+	PixelIterator		*iterator = NULL;
 	size_t			 y;
 
 	assert(ctx != NULL);
@@ -184,7 +191,7 @@ fill_stream(struct pron_context *ctx, MagickWand *image_wand)
 	iterator = NewPixelIterator(image_wand);
 	if ((iterator == NULL)) {
 		ThrowWandException(image_wand);
-		return (-1);
+		goto error;
 	}
 
 	for (y = 0; y < ctx->height; y++) {
@@ -203,19 +210,25 @@ fill_stream(struct pron_context *ctx, MagickWand *image_wand)
 	}
 	if (y < ctx->height) {
 		ThrowWandException(image_wand);
-		return (-1);
+		goto error;
 	}
 
 	DestroyPixelIterator(iterator);
 
 	return (0);
+
+error:
+	if (iterator != NULL)
+		DestroyPixelIterator(iterator);
+
+	return (-1);
 }
 
 static int
 handle_transparency(MagickWand **image_wand)
 {
-	PixelWand		*background;
-	MagickWand		*composite_wand;
+	PixelWand		*background = NULL;
+	MagickWand		*composite_wand = NULL;
 	MagickBooleanType	 status;
 	size_t			 width, height;
 
@@ -228,17 +241,15 @@ handle_transparency(MagickWand **image_wand)
 	status = PixelSetColor(background, "white");
 	if (status == MagickFalse) {
 		fprintf(stderr, "PixelSetColor");
-		return (-1);
+		goto error;
 	}
 
 	composite_wand = NewMagickWand();
 	status = MagickNewImage(composite_wand, width, height, background);
 	if (status == MagickFalse) {
 		ThrowWandException(composite_wand);
-		return (-1);
+		goto error;
 	}
-
-	DestroyPixelWand(background);
 
 	status = MagickCompositeImage(composite_wand, *image_wand, OverCompositeOp, 0, 0);
 	if (status == MagickFalse) {
@@ -246,9 +257,18 @@ handle_transparency(MagickWand **image_wand)
 		return (-1);
 	}
 
+	DestroyPixelWand(background);
 	DestroyMagickWand(*image_wand);
 
 	*image_wand = composite_wand;
 
 	return (0);
+
+error:
+	if (background != NULL)
+		DestroyPixelWand(background);
+	if (composite_wand != NULL)
+		DestroyMagickWand(composite_wand);
+
+	return (-1);
 }
