@@ -189,7 +189,7 @@ fill_stream(struct pron_context *ctx, MagickWand *image_wand)
 	p = ctx->stream;
 
 	iterator = NewPixelIterator(image_wand);
-	if ((iterator == NULL)) {
+	if (iterator == NULL) {
 		ThrowWandException(image_wand);
 		goto error;
 	}
@@ -199,7 +199,7 @@ fill_stream(struct pron_context *ctx, MagickWand *image_wand)
 		size_t		  x, width;
 
 		pixels = PixelGetNextIteratorRow(iterator, &width);
-		if ((pixels == NULL))
+		if (pixels == NULL)
 			break;
 		for (x = 0; x < width; x++) {
 			double hue, saturation, lightness;
