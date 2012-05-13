@@ -10,6 +10,8 @@ struct pron_context {
 	size_t		 width;
 	size_t		 height;
 	ssize_t		 frame_count;
+	ssize_t		 panels_x;
+	ssize_t		 panels_y;
 	unsigned char	*stream;
 	MagickWand	*wand;
 };
@@ -40,7 +42,7 @@ pron_deinit()
 }
 
 struct pron_context *
-pron_context_open(char *filename, size_t width, size_t height)
+pron_context_open(char *filename, size_t width, size_t height, ssize_t panels_x, ssize_t panels_y)
 {
 	struct pron_context	*ctx = NULL;
 	MagickBooleanType	 status;
@@ -68,6 +70,9 @@ pron_context_open(char *filename, size_t width, size_t height)
 
 	ctx->width = width;
 	ctx->height = height;
+
+	ctx->panels_x = panels_x;
+	ctx->panels_y = panels_y;
 
 	MagickSetLastIterator(ctx->wand);
 	ctx->frame_count = MagickGetIteratorIndex(ctx->wand);
@@ -126,7 +131,7 @@ pron_get_frame_count(struct pron_context *ctx)
 }
 
 int
-pron_pronisate(struct pron_context *ctx, ssize_t frame)
+pron_pronisate(struct pron_context *ctx, ssize_t frame, ssize_t panel_x, ssize_t panel_y)
 {
 	MagickWand		*image_wand = NULL;
 	MagickBooleanType	 mstatus;
@@ -134,6 +139,8 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame)
 
 	assert(ctx != NULL);
 	assert(IsMagickWand(ctx->wand) == MagickTrue);
+	assert(panel_x < ctx->panels_x);
+	assert(panel_y < ctx->panels_y);
 
 	image_wand = CloneMagickWand(ctx->wand);
 
@@ -143,7 +150,13 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame)
 		goto error;
 	}
 
-	mstatus = MagickScaleImage(image_wand, ctx->width, ctx->height);
+	mstatus = MagickScaleImage(image_wand, ctx->width * ctx->panels_x, ctx->height * ctx->panels_y);
+	if (mstatus == MagickFalse) {
+		ThrowWandException(ctx->wand);
+		goto error;
+	}
+
+	mstatus = MagickCropImage(image_wand, ctx->width, ctx->height, ctx->width * panel_x, ctx->height * panel_y);
 	if (mstatus == MagickFalse) {
 		ThrowWandException(image_wand);
 		goto error;

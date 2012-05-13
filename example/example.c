@@ -7,6 +7,10 @@
 #define IMAGE	"OWNAGE.gif"
 #define WIDTH	100
 #define HEIGHT	50
+#define PANEL_X	0
+#define PANEL_Y	0
+#define PANELS_X	1
+#define PANELS_Y	1
 
 int
 main(int argc, char **argv)
@@ -16,7 +20,7 @@ main(int argc, char **argv)
 
 	pron_init();
 
-	ctx = pron_context_open(IMAGE, WIDTH, HEIGHT);
+	ctx = pron_context_open(IMAGE, WIDTH, HEIGHT, PANELS_X, PANELS_Y);
 	if (ctx == NULL) {
 		fprintf(stderr, "pron_context_open failed\n");
 		exit(EXIT_FAILURE);
@@ -26,7 +30,7 @@ main(int argc, char **argv)
 		unsigned char	*p;
 		size_t		 y;
 
-		if (pron_pronisate(ctx, frame) != 0) {
+		if (pron_pronisate(ctx, frame, PANEL_X, PANEL_Y) != 0) {
 			fprintf(stderr, "pron_pronisate failed\n");
 			exit(EXIT_FAILURE);
 		}
