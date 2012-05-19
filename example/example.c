@@ -35,7 +35,7 @@ main(int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 
-		p = pron_get_streams(ctx)[PANEL_X][PANEL_Y];
+		p = pron_get_stream(ctx, PANEL_X, PANEL_Y);
 
 		for (y = 0; y < pron_get_height(ctx); y++) {
 			size_t x;

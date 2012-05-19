@@ -135,11 +135,14 @@ pron_context_close(struct pron_context *ctx)
 	free(ctx);
 }
 
-unsigned char ***
-pron_get_streams(struct pron_context *ctx)
+unsigned char *
+pron_get_stream(struct pron_context *ctx, ssize_t px, ssize_t py)
 {
 	assert(ctx != NULL);
-	return (ctx->streams);
+	assert(px < ctx->panels_x);
+	assert(py < ctx->panels_y);
+
+	return (ctx->streams[px][py]);
 }
 
 size_t
