@@ -30,12 +30,13 @@ main(int argc, char **argv)
 		unsigned char	*p;
 		size_t		 y;
 
-		if (pron_pronisate(ctx, frame, PANEL_X, PANEL_Y) != 0) {
+		if (pron_pronisate(ctx, frame) != 0) {
 			fprintf(stderr, "pron_pronisate failed\n");
 			exit(EXIT_FAILURE);
 		}
 
-		p = pron_get_stream(ctx);
+		p = pron_get_streams(ctx)[PANEL_X][PANEL_Y];
+
 		for (y = 0; y < pron_get_height(ctx); y++) {
 			size_t x;
 

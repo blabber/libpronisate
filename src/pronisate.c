@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
@@ -7,17 +6,17 @@
 #include "pronisate.h"
 
 struct pron_context {
-	size_t		 width;
-	size_t		 height;
-	ssize_t		 frame_count;
-	ssize_t		 panels_x;
-	ssize_t		 panels_y;
-	unsigned char	*stream;
-	MagickWand	*wand;
+	size_t		   width;
+	size_t		   height;
+	ssize_t		   frame_count;
+	ssize_t		   panels_x;
+	ssize_t		   panels_y;
+	unsigned char	***streams;
+	MagickWand	  *wand;
 };
 
 static int handle_transparency(MagickWand **_image_wand);
-static int fill_stream(struct pron_context *_ctx, MagickWand *_image_wand);
+static int fill_stream(struct pron_context *_ctx, MagickWand *_image_wand, int _panel_x, int _panel_y);
 
 /* stolen from the MagickWand documentation */
 #define ThrowWandException(wand) do {                             \
@@ -46,19 +45,35 @@ pron_context_open(char *filename, size_t width, size_t height, ssize_t panels_x,
 {
 	struct pron_context	*ctx = NULL;
 	MagickBooleanType	 status;
+	int			 x = -1, y = -1;
 
 	ctx = malloc(sizeof(struct pron_context));
 	if (ctx == NULL) {
 		fprintf(stderr, "malloc\n");
 		goto error;
 	}
-	ctx->stream = NULL;
+	ctx->streams = NULL;
 	ctx->wand = NULL;
 
-	ctx->stream = malloc(width*height);
-	if (ctx->stream == NULL) {
+	/* TODO Errorhandling */
+	ctx->streams = malloc(panels_x * sizeof(unsigned char **));
+	if (ctx->streams == NULL) {
 		fprintf(stderr, "malloc\n");
 		goto error;
+	}
+	for (x = 0; x < panels_x; x++) {
+		ctx->streams[x] = malloc(panels_y * sizeof(unsigned char *));
+		if (ctx->streams[x] == NULL) {
+			fprintf(stderr, "malloc\n");
+			goto error;
+		}
+		for (y = 0; y < panels_y; y++) {
+			ctx->streams[x][y] = malloc(width*height);
+			if (ctx->streams[x][y] == NULL) {
+				fprintf(stderr, "malloc\n");
+				goto error;
+			}
+		}
 	}
 
 	ctx->wand = NewMagickWand();
@@ -84,7 +99,15 @@ error:
 	if (ctx != NULL) {
 		if (ctx->wand != NULL)
 			DestroyMagickWand(ctx->wand);
-		free(ctx->stream);
+
+		for ( ; x >= 0; x--) {
+			for ( ; y >= 0; y--) {
+				free(ctx->streams[x][y]);
+			}
+			free(ctx->streams[x]);
+		}
+
+		free(ctx->streams);
 		free(ctx);
 	}
 
@@ -94,19 +117,29 @@ error:
 void
 pron_context_close(struct pron_context *ctx)
 {
+	int x, y;
+
 	assert(ctx != NULL);
 	assert(IsMagickWand(ctx->wand) == MagickTrue);
 
 	DestroyMagickWand(ctx->wand);
-	free(ctx->stream);
+
+	for ( x = 0; x < ctx->panels_x; x++) {
+		for ( y = 0; y < ctx->panels_y; y++) {
+			free(ctx->streams[x][y]);
+		}
+		free(ctx->streams[x]);
+	}
+
+	free(ctx->streams);
 	free(ctx);
 }
 
-unsigned char *
-pron_get_stream(struct pron_context *ctx)
+unsigned char ***
+pron_get_streams(struct pron_context *ctx)
 {
 	assert(ctx != NULL);
-	return (ctx->stream);
+	return (ctx->streams);
 }
 
 size_t
@@ -131,16 +164,16 @@ pron_get_frame_count(struct pron_context *ctx)
 }
 
 int
-pron_pronisate(struct pron_context *ctx, ssize_t frame, ssize_t panel_x, ssize_t panel_y)
+pron_pronisate(struct pron_context *ctx, ssize_t frame)
 {
 	MagickWand		*image_wand = NULL;
+	MagickWand		*crop_wand = NULL;
 	MagickBooleanType	 mstatus;
 	int			 istatus;
+	int			 px, py;
 
 	assert(ctx != NULL);
 	assert(IsMagickWand(ctx->wand) == MagickTrue);
-	assert(panel_x < ctx->panels_x);
-	assert(panel_y < ctx->panels_y);
 
 	image_wand = CloneMagickWand(ctx->wand);
 
@@ -156,22 +189,31 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame, ssize_t panel_x, ssize_t
 		goto error;
 	}
 
-	mstatus = MagickCropImage(image_wand, ctx->width, ctx->height, ctx->width * panel_x, ctx->height * panel_y);
-	if (mstatus == MagickFalse) {
-		ThrowWandException(image_wand);
-		goto error;
-	}
-
 	istatus = handle_transparency(&image_wand);
 	if (istatus != 0) {
 		fprintf(stderr, "handle_transparency");
 		goto error;
 	}
 
-	istatus = fill_stream(ctx, image_wand);
-	if (istatus != 0) {
-		fprintf(stderr, "fill_stream");
-		goto error;
+	for (px = 0; px < ctx->panels_x; px++) {
+		for (py = 0; py < ctx->panels_y; py++) {
+			crop_wand = CloneMagickWand(image_wand);
+
+			mstatus = MagickCropImage(crop_wand, 
+			    ctx->width, ctx->height, ctx->width * px, ctx->height * py);
+			if (mstatus == MagickFalse) {
+				ThrowWandException(crop_wand);
+				goto error;
+			}
+
+			istatus = fill_stream(ctx, crop_wand, px, py);
+			if (istatus != 0) {
+				fprintf(stderr, "fill_stream");
+				goto error;
+			}
+
+			DestroyMagickWand(crop_wand);
+		}
 	}
 
 	DestroyMagickWand(image_wand);
@@ -181,25 +223,27 @@ pron_pronisate(struct pron_context *ctx, ssize_t frame, ssize_t panel_x, ssize_t
 error:
 	if (image_wand != NULL)
 		DestroyMagickWand(image_wand);
+	if (crop_wand != NULL)
+		DestroyMagickWand(crop_wand);
 
 	return (-1);
 
 }
 
 static int
-fill_stream(struct pron_context *ctx, MagickWand *image_wand)
+fill_stream(struct pron_context *ctx, MagickWand *image_wand, int px, int py)
 {
 	unsigned char		*p = NULL;
 	PixelIterator		*iterator = NULL;
 	size_t			 y;
 
 	assert(ctx != NULL);
-	assert(ctx->stream != NULL);
+	assert(ctx->streams != NULL);
 	assert(IsMagickWand(image_wand) == MagickTrue);
 	assert(MagickGetImageWidth(image_wand) == ctx->width);
 	assert(MagickGetImageHeight(image_wand) == ctx->height);
 
-	p = ctx->stream;
+	p = ctx->streams[px][py];
 
 	iterator = NewPixelIterator(image_wand);
 	if (iterator == NULL) {
