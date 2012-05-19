@@ -55,7 +55,6 @@ pron_context_open(char *filename, size_t width, size_t height, ssize_t panels_x,
 	ctx->streams = NULL;
 	ctx->wand = NULL;
 
-	/* TODO Errorhandling */
 	ctx->streams = malloc(panels_x * sizeof(unsigned char **));
 	if (ctx->streams == NULL) {
 		fprintf(stderr, "malloc\n");
