@@ -17,12 +17,13 @@ main(int argc, char **argv)
 {
 	struct pron_context *ctx;
 	ssize_t frame;
+	PRON_ERROR error;
 
 	pron_init();
 
-	ctx = pron_context_open(IMAGE, WIDTH, HEIGHT, PANELS_X, PANELS_Y);
-	if (ctx == NULL) {
-		fprintf(stderr, "pron_context_open failed\n");
+	error = pron_context_open(IMAGE, WIDTH, HEIGHT, PANELS_X, PANELS_Y, &ctx);
+	if (error != PRON_SUCCESS) {
+		fprintf(stderr, "pron_context_open faileid: %s\n", pron_get_error(error));
 		exit(EXIT_FAILURE);
 	}
 
@@ -30,8 +31,9 @@ main(int argc, char **argv)
 		unsigned char	*p;
 		size_t		 y;
 
-		if (pron_pronisate(ctx, frame) != 0) {
-			fprintf(stderr, "pron_pronisate failed\n");
+		error = pron_pronisate(ctx, frame);
+		if (error != PRON_SUCCESS) {
+			fprintf(stderr, "pron_pronisate failed: %s\n", pron_get_error(error));
 			exit(EXIT_FAILURE);
 		}
 
