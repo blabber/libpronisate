@@ -1,0 +1,176 @@
+LIBPRONISATE(3)        FreeBSD Library Functions Manual        LIBPRONISATE(3)
+
+NAME
+     pron_context_close, pron_context_open, pron_deinit, pron_get_error,
+     pron_get_frame_count, pron_get_height, pron_get_stream, pron_get_width,
+     pron_init, pron_pronisate -- functions used to pronisate image files
+
+LIBRARY
+     library ``libpronisate''
+
+SYNOPSIS
+     #include <pronisate.h>
+
+     void
+     pron_context_close(struct pron_context *ctx);
+
+     PRON_ERROR
+     pron_context_open(char *filename, size_t width, size_t height,
+         ssize_t panels_x, ssize_t panels_y, struct pron_context **ctx);
+
+     void
+     pron_deinit(void);
+
+     void
+     pron_get_error(void);
+
+     ssize_t
+     pron_get_frame_count(struct pron_context *ctx);
+
+     size_t
+     pron_get_height(struct pron_context *ctx);
+
+     unsigned char *
+     pron_get_stream(struct pron_context *ctx);
+
+     size_t
+     pron_get_width(struct pron_context *ctx);
+
+     void
+     pron_init(void);
+
+     PRON_ERROR
+     pron_pronisate(struct pron_context *ctx, ssize_t frame);
+
+DESCRIPTION
+     This library is used to pronisate an image file.  Pronisation means the
+     conversion of the image into a linear byte stream as used as pixels in
+     image frames defined by the PRON-Wall protocol.  This library peruses the
+     MagickWand API to achieve this goal.
+
+     The first thing to do, when you are using this library, is to initialize
+     it using the pron_init() function.
+
+     The next step is to open a context, using the pron_context_open() func-
+     tion.  This function takes the filename of the image file to be pro-
+     nisated.  width and height denote the size of a single PRON-panel.
+     panels_x and panels_y define how many PRON-panels are used on the x and y
+     axis.  ctx is a handle which will point to an opaque context struct once
+     the function has returned, or NULL if an error occured.  The majority of
+     the functions expect this struct as first parameter.  It is possible to
+     open more than one context in parallel.
+
+     If you are pronisating an animated image file, you should check how many
+     frames it contains using the pron_get_frame_count() funtion.  It takes a
+     pointer to a context as the ctx argument.
+
+     In order to pronisate a frame of the image use the pron_pronisate() func-
+     tion.  It takes a pointer to a context in the ctx argument and the frame
+     to pronisate in the frame argument.  This function silently replaces
+     transparent backgrounds with a white background and scales the image to
+     the dimensions of the PRON-Wall.
+
+     Once a frame has been pronisated, the linear byte streams for each panel
+     can be retrieved using the pron_get_stream() function.  It takes a
+     pointer to a context in the ctx argument.  The panel for which the stream
+     should be retrieved is identified by the px and py arguments.  The top
+     left panel is identified by a px value of 0 and a py value of 0.
+
+     If you are finished you are expected to close the open contexts using the
+     pron_context_closeo() function.  It takes a pointer to a context in the
+     ctx argument.  Basically this function frees the internally allocated
+     structs and buffers.
+
+     Finally deinitialize the library using the pron_deinit() function.
+
+     There are also some convenience funtions which are not necessary for the
+     pronisation process.
+
+     The pron_get_height() and pron_get_width() functions take a pointer to
+     context in the ctx argument and return the corresponding values as set by
+     the corresponding arguments to the pron_context_open() function.
+
+     The pron_get_error() takes a PRON_ERROR value as the error argument.
+
+RETURN VALUES
+     The pron_get_stream() function retuns the pronisated stream of a single
+     image frame for a given PRON-panel. The buffer used for the stream is
+     reused everytime a new frame is pronisated.
+
+     The pron_context_open() and pron_pronisate() functions returns a
+     PRON_ERROR, which can take one of the following values.
+
+     PRON_SUCCESS              No error occured.
+
+     PRON_MALLOC_ERROR         Memory allocation failed.
+
+     PRON_READ_IMAGE_ERROR     Could not read the image file.
+
+     PRON_WAND_ERROR           A MagickWand internal error occured.
+
+     PRON_PIXELSETCOLOR_ERROR  Failed to set a pixel color.
+
+     The pron_get_error() function returns a human readable string representa-
+     tion of a PRON_ERROR value.
+
+     The pron_get_frame_count() funtion returns the number of frames contained
+     in the image file.
+
+     The pron_get_height() and pron_get_width() functions return the size of
+     the PRON-panels.
+
+EXAMPLES
+     #include <stdout.h>
+     #include "pronisate.h"
+
+     /* ... snip ... */
+
+     struct pron_context *ctx;
+     PRON_ERROR error;
+     ssize_t frame;
+     size_t x, y;
+     unsigned char *s0x0, *s1x0, *s0x1, *s1x1;
+
+     pron_init();
+
+     /* Open a context for the image file example.png which will be displayed on
+        four PRON-panels, 32x32 pixels each, which will be arranged in a square. */
+     error = pron_context_open("example.png", 32, 32, 2, 2, &ctx);
+     if (error != PRON_SUCCESS) {
+       fprintf(stderr, "Error: %s\n", pron_get_error(error));
+       exit(EXIT_FAILURE);
+     }
+
+     for (frame = 0; frame <= pron_get_frame_count(ctx); frame++) {
+       error = pron_pronisate(ctx, frame);
+       if (error != PRON_SUCCESS) {
+         fprintf(stderr, "Error: %s\n", pron_get_error(error));
+         exit(EXIT_FAILURE);
+       }
+
+       s0x0 = pron_get_stream(ctx, 0, 0);
+       s1x0 = pron_get_stream(ctx, 1, 0);
+       s0x1 = pron_get_stream(ctx, 0, 1);
+       s1x1 = pron_get_stream(ctx, 1, 1);
+
+       /* Do something with the streams. Preferably wrap them in PRON-protocol
+          packets and send them to a PRON-wall */
+     }
+
+     pron_context_close(ctx);
+
+     pron_deinit();
+
+     /* ... snip ... */
+
+SEE ALSO
+     PRON-Wall Protocol, https://raumzeitlabor.de/wiki/PRON-Protokoll,
+     RZL1337.
+
+AUTHORS
+     This manual page was written by Tobias Rehbein <tobias.rehbein@web.de>.
+
+BUGS
+     The image scaling does not respect aspect ratio.
+
+                                 July 24, 2012

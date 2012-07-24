@@ -1,0 +1,239 @@
+.Dd July 24, 2012
+.Dt LIBPRONISATE 3
+.\" .Os
+.Sh NAME
+.Nm pron_context_close ,
+.Nm pron_context_open ,
+.Nm pron_deinit ,
+.Nm pron_get_error ,
+.Nm pron_get_frame_count ,
+.Nm pron_get_height ,
+.Nm pron_get_stream ,
+.Nm pron_get_width ,
+.Nm pron_init ,
+.Nm pron_pronisate
+.Nd "functions used to pronisate image files"
+.Sh LIBRARY
+.Lb libpronisate
+.Sh SYNOPSIS
+.In pronisate.h
+.Ft void
+.Fn pron_context_close "struct pron_context *ctx"
+.Ft PRON_ERROR
+.Fn pron_context_open "char *filename" "size_t width" "size_t height" "ssize_t panels_x" "ssize_t panels_y" "struct pron_context **ctx"
+.Ft void
+.Fn pron_deinit "void"
+.Ft void
+.Fn pron_get_error "void"
+.Ft ssize_t
+.Fn pron_get_frame_count "struct pron_context *ctx"
+.Ft size_t
+.Fn pron_get_height "struct pron_context *ctx"
+.Ft unsigned char *
+.Fn pron_get_stream "struct pron_context *ctx"
+.Ft size_t
+.Fn pron_get_width "struct pron_context *ctx"
+.Ft void
+.Fn pron_init "void"
+.Ft PRON_ERROR
+.Fn pron_pronisate "struct pron_context *ctx" "ssize_t frame"
+.Sh DESCRIPTION
+This library is used to pronisate an image file.
+Pronisation means the conversion of the image into a linear byte stream as
+used as pixels in image frames defined by the PRON-Wall protocol.
+This library peruses the MagickWand API to achieve this goal.
+.Pp
+The first thing to do, when you are using this library, is to
+initialize it using the
+.Fn pron_init
+function.
+.Pp
+The next step is to open a context, using the
+.Fn pron_context_open
+function.
+This function takes the
+.Fa filename
+of the image file to be pronisated.
+.Fa width
+and
+.Fa height
+denote the size of a single PRON-panel.
+.Fa panels_x
+and
+.Fa panels_y
+define how many PRON-panels are used on the x and y axis.
+.Fa ctx
+is a handle which will point to an opaque context struct once the function has
+returned, or NULL if an error occured.
+The majority of the functions expect this struct as first parameter.
+It is possible to open more than one context in parallel.
+.Pp
+If you are pronisating an animated image file, you should check how many frames
+it contains using the
+.Fn pron_get_frame_count
+funtion.
+It takes a pointer to a context as the
+.Fa ctx
+argument.
+.Pp
+In order to pronisate a frame of the image use the
+.Fn pron_pronisate
+function.
+It takes a pointer to a context in the
+.Fa ctx
+argument and the frame to pronisate in the
+.Fa frame
+argument.
+This function silently replaces transparent backgrounds with a white background
+and scales the image to the dimensions of the PRON-Wall.
+.Pp
+Once a frame has been pronisated, the linear byte streams for each panel can be
+retrieved using the
+.Fn pron_get_stream
+function.
+It takes a pointer to a context in the
+.Fa ctx
+argument.
+The panel for which the stream should be retrieved is identified by the
+.Fa px
+and
+.Fa py
+arguments.
+The top left panel is identified by a
+.Fa px
+value of 0 and a
+.Fa py
+value of 0.
+.Pp
+If you are finished you are expected to close the open contexts using the
+.Fn pron_context_closeo
+function.
+It takes a pointer to a context in the
+.Fa ctx
+argument.
+Basically this function frees the internally allocated structs and buffers.
+.Pp
+Finally deinitialize the library using the
+.Fn pron_deinit
+function.
+.Pp
+There are also some convenience funtions which are not necessary for the
+pronisation process.
+.Pp
+The
+.Fn pron_get_height
+and
+.Fn pron_get_width
+functions take a pointer to context in the
+.Fa ctx
+argument and return the corresponding values as set by the corresponding
+arguments to the
+.Fn pron_context_open
+function.
+.Pp
+The
+.Fn pron_get_error
+takes a
+.Vt PRON_ERROR
+value as the
+.Fa error
+argument.
+.Pp
+.Sh RETURN VALUES
+The
+.Fn pron_get_stream
+function retuns the pronisated stream of a single image frame for a given
+PRON-panel. The buffer used for the stream is reused everytime a new frame is
+pronisated.
+.Pp
+The
+.Fn pron_context_open
+and
+.Fn pron_pronisate
+functions returns a
+.Vt PRON_ERROR ,
+which can take one of the following values.
+.Bl -tag -width ".Dv PRON_PIXELSETCOLOR_ERROR"
+.It Dv PRON_SUCCESS
+No error occured.
+.It Dv PRON_MALLOC_ERROR
+Memory allocation failed.
+.It Dv PRON_READ_IMAGE_ERROR
+Could not read the image file.
+.It Dv PRON_WAND_ERROR
+A MagickWand internal error occured.
+.It Dv PRON_PIXELSETCOLOR_ERROR
+Failed to set a pixel color.
+.El
+.Pp
+The
+.Fn pron_get_error
+function returns a human readable string representation of a
+.Vt PRON_ERROR
+value.
+.Pp
+The
+.Fn pron_get_frame_count
+funtion returns the number of frames contained in the image file.
+.Pp
+The
+.Fn pron_get_height
+and
+.Fn pron_get_width
+functions return the size of the PRON-panels.
+.Sh EXAMPLES
+.Bd -literal
+#include <stdout.h>
+#include "pronisate.h"
+
+/* ... snip ... */
+
+struct pron_context *ctx;
+PRON_ERROR error;
+ssize_t frame;
+size_t x, y;
+unsigned char *s0x0, *s1x0, *s0x1, *s1x1;
+
+pron_init();
+
+/* Open a context for the image file example.png which will be displayed on
+   four PRON-panels, 32x32 pixels each, which will be arranged in a square. */
+error = pron_context_open("example.png", 32, 32, 2, 2, &ctx);
+if (error != PRON_SUCCESS) {
+  fprintf(stderr, "Error: %s\en", pron_get_error(error));
+  exit(EXIT_FAILURE);
+}
+
+for (frame = 0; frame <= pron_get_frame_count(ctx); frame++) {
+  error = pron_pronisate(ctx, frame);
+  if (error != PRON_SUCCESS) {
+    fprintf(stderr, "Error: %s\en", pron_get_error(error));
+    exit(EXIT_FAILURE);
+  }
+
+  s0x0 = pron_get_stream(ctx, 0, 0);
+  s1x0 = pron_get_stream(ctx, 1, 0);
+  s0x1 = pron_get_stream(ctx, 0, 1);
+  s1x1 = pron_get_stream(ctx, 1, 1);
+
+  /* Do something with the streams. Preferably wrap them in PRON-protocol
+     packets and send them to a PRON-wall */
+}
+
+pron_context_close(ctx);
+
+pron_deinit();
+
+/* ... snip ... */
+.Ed
+.Sh SEE ALSO
+.Rs
+.%T "PRON-Wall Protocol"
+.%O RZL1337
+.%U https://raumzeitlabor.de/wiki/PRON-Protokoll
+.Re
+.Sh AUTHORS
+This manual page was written by
+.An Tobias Rehbein Aq tobias.rehbein@web.de .
+.Sh BUGS
+The image scaling does not respect aspect ratio.

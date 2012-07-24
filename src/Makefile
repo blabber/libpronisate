@@ -8,6 +8,14 @@ CFLAGS=		-I/usr/local/include/ImageMagick
 LDFLAGS=	-L/usr/local/lib 
 LDADD=		-lMagickWand -lMagickCore
 
-NO_MAN=		YES
+MAN3=		libpronisate.3
 
 .include <bsd.lib.mk>
+
+all:		README
+
+COL_CMD=		/usr/bin/col -bx
+NROFF_CMD=		/usr/bin/nroff -c -mandoc
+
+README:		${MAN3}
+	${NROFF_CMD} ${MAN3} | ${COL_CMD} > ${.TARGET}
