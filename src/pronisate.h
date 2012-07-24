@@ -9,7 +9,7 @@ typedef enum pron_error {
 struct pron_context;
 
 void		 pron_init(void);
-PRON_ERROR	 pron_context_open(char *_filename, size_t _width, size_t _height, ssize_t _panels_x, ssize_t _panels_y, struct pron_context **_ctx);
+PRON_ERROR	 pron_context_open(const char *_filename, size_t _width, size_t _height, ssize_t _panels_x, ssize_t _panels_y, struct pron_context **_ctx);
 PRON_ERROR	 pron_pronisate(struct pron_context *_ctx, ssize_t _frame);
 unsigned char	*pron_get_stream(struct pron_context *_ctx, ssize_t px, ssize_t py);
 size_t		 pron_get_width(struct pron_context *_ctx);

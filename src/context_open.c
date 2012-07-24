@@ -5,7 +5,7 @@
 #include "_pronisate.h"
 
 PRON_ERROR
-pron_context_open(char *filename, size_t width, size_t height, ssize_t panels_x, ssize_t panels_y, struct pron_context **ctx)
+pron_context_open(const char *filename, size_t width, size_t height, ssize_t panels_x, ssize_t panels_y, struct pron_context **ctx)
 {
 	struct pron_context	*lctx;
 	MagickBooleanType	 status;
