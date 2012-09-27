@@ -7,7 +7,6 @@ infrastructure.
 
 To run the example: `cd example && env LD_LIBRARY_PATH=../src ./example`
 
-*This code is work in progress and will continue to evolve.*
 The `example` binary has compiled in the relative runtime path `../src`.
 Therefore it has to be called from the example subdirectory.
 
