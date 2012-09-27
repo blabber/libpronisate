@@ -1,3 +1,5 @@
+#include <wand/MagickWand.h>
+
 #include "pronisate.h"
 
 void

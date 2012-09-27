@@ -1,5 +1,3 @@
-#include <wand/MagickWand.h>
-
 #ifndef PRONISATE_H
 #define PRONISATE_H
 
