@@ -1,3 +1,5 @@
+#include <wand/MagickWand.h>
+
 typedef enum pron_error {
 	PRON_SUCCESS = 0,
 	PRON_MALLOC_ERROR,

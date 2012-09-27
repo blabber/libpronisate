@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <wand/MagickWand.h>
 
 #include "pronisate.h"
 #include "_pronisate.h"
