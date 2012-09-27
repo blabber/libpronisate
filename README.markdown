@@ -6,7 +6,7 @@ Currently the makefiles are BSD-style makefiles using the FreeBSD make
 infrastructure.
 
 The `example` binary has compiled in the relative runtime path `../src`.
-Therefore it has to be called from the example subdirectory.
+Therefore it has to be called from the `example` subdirectory.
 
 The example gif has been taken from [this][2] site.
 
