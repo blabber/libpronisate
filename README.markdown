@@ -5,8 +5,6 @@ the MagickWand API provided by ImageMagick.
 Currently the makefiles are BSD-style makefiles using the FreeBSD make
 infrastructure.
 
-To run the example: `cd example && env LD_LIBRARY_PATH=../src ./example`
-
 The `example` binary has compiled in the relative runtime path `../src`.
 Therefore it has to be called from the example subdirectory.
 
