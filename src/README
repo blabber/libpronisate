@@ -21,7 +21,7 @@ SYNOPSIS
      void
      pron_deinit(void);
 
-     void
+     const char *
      pron_get_error(void);
 
      ssize_t
