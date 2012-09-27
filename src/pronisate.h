@@ -1,5 +1,8 @@
 #include <wand/MagickWand.h>
 
+#ifndef PRONISATE_H
+#define PRONISATE_H
+
 typedef enum pron_error {
 	PRON_SUCCESS = 0,
 	PRON_MALLOC_ERROR,
@@ -20,3 +23,5 @@ ssize_t		 pron_get_frame_count(struct pron_context *_ctx);
 const char	*pron_get_error(PRON_ERROR error);
 void		 pron_context_close(struct pron_context *_ctx);
 void		 pron_deinit(void);
+
+#endif
